@@ -5,12 +5,15 @@ import { EnergyOrb } from "./EnergyOrb";
 import { Base } from "./Base";
 import { GameBackground } from "./GameBackground";
 import { GameControls } from "./GameControls";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 export const GameArea: React.FC = () => {
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const orbSpawnIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
+  const [mobileJoystickPos, setMobileJoystickPos] = useState<Position | null>(null);
+  const isMobile = useIsMobile();
   
   const {
     ufos,
@@ -18,6 +21,7 @@ export const GameArea: React.FC = () => {
     base,
     isRunning,
     updateUFOPosition,
+    updateUFORotation,
     setUFODragging,
     collectEnergyOrb,
     depositEnergy,
@@ -98,6 +102,16 @@ export const GameArea: React.FC = () => {
       y: Math.max(ufo.radius, Math.min(size.height - ufo.radius, position.y)),
     };
     
+    // Calculate rotation for direction indicator
+    if (ufo.position.x !== boundedPosition.x || ufo.position.y !== boundedPosition.y) {
+      const deltaX = boundedPosition.x - ufo.position.x;
+      const deltaY = boundedPosition.y - ufo.position.y;
+      if (deltaX !== 0 || deltaY !== 0) {
+        const rotation = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+        updateUFORotation(id, rotation);
+      }
+    }
+    
     updateUFOPosition(id, boundedPosition);
   };
 
@@ -138,8 +152,62 @@ export const GameArea: React.FC = () => {
     );
   };
 
+  // Mobile touch joystick handling
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isRunning || ufos.length === 0) return;
+    
+    const touch = e.touches[0];
+    setMobileJoystickPos({
+      x: touch.clientX,
+      y: touch.clientY,
+    });
+    
+    // Start moving the UFO
+    if (ufos[0]) {
+      handleUFODragStart(ufos[0].id);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!mobileJoystickPos || ufos.length === 0) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - mobileJoystickPos.x;
+    const deltaY = touch.clientY - mobileJoystickPos.y;
+    
+    // Move the UFO based on touch movement
+    if (ufos[0]) {
+      const ufo = ufos[0];
+      const newPosition = {
+        x: ufo.position.x + deltaX * 0.5, // Reduce sensitivity
+        y: ufo.position.y + deltaY * 0.5,
+      };
+      
+      handleUFOPositionUpdate(ufo.id, newPosition);
+    }
+    
+    // Update the joystick position
+    setMobileJoystickPos({
+      x: touch.clientX,
+      y: touch.clientY,
+    });
+  };
+
+  const handleTouchEnd = () => {
+    if (ufos[0]) {
+      handleUFODragEnd(ufos[0].id);
+    }
+    setMobileJoystickPos(null);
+  };
+
   return (
-    <div className="w-full h-screen relative overflow-hidden" ref={gameAreaRef}>
+    <div 
+      className="w-full h-screen relative overflow-hidden" 
+      ref={gameAreaRef}
+      onTouchStart={isMobile ? handleTouchStart : undefined}
+      onTouchMove={isMobile ? handleTouchMove : undefined}
+      onTouchEnd={isMobile ? handleTouchEnd : undefined}
+    >
       <GameBackground width={size.width} height={size.height} />
       
       {/* Welcome message */}
@@ -191,6 +259,17 @@ export const GameArea: React.FC = () => {
         />
       ))}
       
+      {/* Mobile touch indicator */}
+      {isMobile && mobileJoystickPos && (
+        <div 
+          className="absolute w-16 h-16 rounded-full bg-white/20 pointer-events-none z-50"
+          style={{
+            left: mobileJoystickPos.x - 32,
+            top: mobileJoystickPos.y - 32,
+          }}
+        />
+      )}
+      
       {/* Game Controls */}
       <GameControls
         onStart={startGame}
@@ -206,6 +285,16 @@ export const GameArea: React.FC = () => {
         <div>Energy: {base.storedEnergy}</div>
         <div>Orbs: {energyOrbs.length}</div>
       </div>
+      
+      {/* Mobile instructions */}
+      {isMobile && !isRunning && ufos.length > 0 && (
+        <div className="absolute bottom-20 left-0 right-0 flex justify-center">
+          <div className="bg-black/70 p-3 rounded-lg text-white text-center text-sm">
+            <p>Tap and drag anywhere to move the UFO</p>
+            <p>Tap orbs to collect when UFO is nearby</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

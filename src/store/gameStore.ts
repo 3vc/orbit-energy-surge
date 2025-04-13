@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { nanoid } from "nanoid";
 
@@ -14,6 +13,7 @@ export type UFO = {
   speed: number;
   radius: number;
   isDragging: boolean;
+  rotation?: number;
 };
 
 export type EnergyOrb = {
@@ -40,6 +40,7 @@ type GameState = {
   addUFO: (ufo: Omit<UFO, "id">) => void;
   removeUFO: (id: string) => void;
   updateUFOPosition: (id: string, position: Position) => void;
+  updateUFORotation: (id: string, rotation: number) => void;
   setUFODragging: (id: string, isDragging: boolean) => void;
   addEnergyOrb: (position: Position) => void;
   removeEnergyOrb: (id: string) => void;
@@ -90,6 +91,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     set((state) => ({
       ufos: state.ufos.map((ufo) =>
         ufo.id === id ? { ...ufo, position } : ufo
+      ),
+    }));
+  },
+
+  updateUFORotation: (id, rotation) => {
+    set((state) => ({
+      ufos: state.ufos.map((ufo) =>
+        ufo.id === id ? { ...ufo, rotation } : ufo
       ),
     }));
   },
@@ -223,6 +232,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       speed: DEFAULT_GAME_CONFIG.ufoSpeed,
       radius: DEFAULT_GAME_CONFIG.ufoRadius,
       isDragging: false,
+      rotation: 0,
     });
   },
 }));
