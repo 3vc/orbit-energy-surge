@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,19 +36,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -96,6 +90,20 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-game-space text-foreground overflow-hidden;
+  }
+}
+
+@layer components {
+  .orb-glow {
+    box-shadow: 0 0 15px 5px theme('colors.game.energy-glow');
+  }
+  
+  .ufo-glow {
+    box-shadow: 0 0 15px 5px theme('colors.game.ufo-glow');
+  }
+  
+  .base-glow {
+    box-shadow: 0 0 25px 10px theme('colors.game.base-glow');
   }
 }
