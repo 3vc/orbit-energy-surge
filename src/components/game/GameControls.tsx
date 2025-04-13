@@ -2,6 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useGameStore } from "@/store/gameStore";
+import { Play, Pause, RefreshCw, Zap } from "lucide-react";
 
 interface GameControlsProps {
   onStart: () => void;
@@ -28,24 +29,29 @@ export const GameControls: React.FC<GameControlsProps> = ({
       {!isRunning ? (
         <Button
           onClick={onStart}
-          className="bg-game-energy text-black hover:bg-game-energy/80"
+          className="bg-game-energy text-black hover:bg-game-energy/80 gap-1"
           disabled={isGameOver}
         >
-          {isGameOver ? "Game Over" : "Start Game"}
+          <Play size={16} />
+          {isGameOver ? "Game Over" : "Start"}
         </Button>
       ) : (
         <Button
           onClick={onPause}
           variant="secondary"
+          className="gap-1"
         >
+          <Pause size={16} />
           Pause
         </Button>
       )}
-      <Button onClick={onReset} variant="destructive">
-        New Game
+      <Button onClick={onReset} variant="destructive" className="gap-1">
+        <RefreshCw size={16} />
+        New
       </Button>
-      <Button onClick={onSpawnOrb} className="bg-game-ufo hover:bg-game-ufo/80">
-        Spawn Orb
+      <Button onClick={onSpawnOrb} className="bg-game-ufo hover:bg-game-ufo/80 gap-1">
+        <Zap size={16} />
+        Orb
       </Button>
     </div>
   );

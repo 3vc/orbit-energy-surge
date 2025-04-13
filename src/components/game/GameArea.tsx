@@ -7,6 +7,7 @@ import { Base } from "./Base";
 import { Projectile } from "./Projectile";
 import { GameBackground } from "./GameBackground";
 import { GameControls } from "./GameControls";
+import { OnScreenControls } from "./OnScreenControls";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -18,6 +19,18 @@ export const GameArea: React.FC = () => {
   const orbSpawnIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [mobileJoystickPos, setMobileJoystickPos] = useState<Position | null>(null);
+  const [activeMoveDirection, setActiveMoveDirection] = useState<{
+    up: boolean;
+    down: boolean;
+    left: boolean;
+    right: boolean;
+  }>({
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+  });
+  const moveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
   
   const {
@@ -111,6 +124,85 @@ export const GameArea: React.FC = () => {
     }
   }, [isRunning, spawnRandomOrb]);
 
+  // Handle continuous movement for on-screen controls
+  useEffect(() => {
+    const moveUFO = () => {
+      if (!isRunning || ufos.length === 0) return;
+      
+      // Get player's first UFO
+      const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
+      if (!playerUfo) return;
+      
+      let dx = 0;
+      let dy = 0;
+      const SPEED = playerUfo.speed * 5;
+      
+      if (activeMoveDirection.up) dy -= SPEED;
+      if (activeMoveDirection.down) dy += SPEED;
+      if (activeMoveDirection.left) dx -= SPEED;
+      if (activeMoveDirection.right) dx += SPEED;
+      
+      if (dx !== 0 || dy !== 0) {
+        // Calculate rotation based on direction
+        const rotation = Math.atan2(dy, dx) * (180 / Math.PI);
+        updateUFORotation(playerUfo.id, rotation);
+        
+        // Update position
+        const newPosition = {
+          x: playerUfo.position.x + dx,
+          y: playerUfo.position.y + dy,
+        };
+        handleUFOPositionUpdate(playerUfo.id, newPosition);
+      }
+    };
+    
+    // Start movement interval if any direction is active
+    const isMoving = Object.values(activeMoveDirection).some(val => val);
+    
+    if (isMoving && !moveIntervalRef.current) {
+      // Start dragging first
+      const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
+      if (playerUfo) {
+        handleUFODragStart(playerUfo.id);
+      }
+      
+      moveIntervalRef.current = setInterval(moveUFO, 16); // ~60fps
+    } else if (!isMoving && moveIntervalRef.current) {
+      // End dragging
+      const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
+      if (playerUfo) {
+        handleUFODragEnd(playerUfo.id);
+      }
+      
+      clearInterval(moveIntervalRef.current);
+      moveIntervalRef.current = null;
+    }
+    
+    return () => {
+      if (moveIntervalRef.current) {
+        clearInterval(moveIntervalRef.current);
+        moveIntervalRef.current = null;
+      }
+    };
+  }, [activeMoveDirection, isRunning, ufos]);
+
+  // Handle direction button press from on-screen controls
+  const handleDirectionPress = (direction: "up" | "down" | "left" | "right") => {
+    setActiveMoveDirection(prev => ({
+      ...prev,
+      [direction]: true
+    }));
+  };
+
+  const handleDirectionRelease = () => {
+    setActiveMoveDirection({
+      up: false,
+      down: false,
+      left: false,
+      right: false
+    });
+  };
+
   // Handle UFO dragging
   const handleUFODragStart = (id: string) => {
     setUFODragging(id, true);
@@ -145,8 +237,9 @@ export const GameArea: React.FC = () => {
       y: Math.max(ufo.radius, Math.min(size.height - ufo.radius, position.y)),
     };
     
-    // Calculate rotation for direction indicator
-    if (ufo.position.x !== boundedPosition.x || ufo.position.y !== boundedPosition.y) {
+    // Calculate rotation for direction indicator if not being handled by button controls
+    if (!Object.values(activeMoveDirection).some(val => val) && 
+        (ufo.position.x !== boundedPosition.x || ufo.position.y !== boundedPosition.y)) {
       const deltaX = boundedPosition.x - ufo.position.x;
       const deltaY = boundedPosition.y - ufo.position.y;
       if (deltaX !== 0 || deltaY !== 0) {
@@ -189,7 +282,7 @@ export const GameArea: React.FC = () => {
     }
   };
 
-  // Handle space key orb collection
+  // Handle space key or button for orb collection
   const handleSpaceKeyCollection = () => {
     if (!isRunning || ufos.length === 0) return;
     
@@ -217,75 +310,30 @@ export const GameArea: React.FC = () => {
         collectEnergyOrb(ufo.id, closestOrb.id);
         toast.success(`Collected ${closestOrb.value} energy!`);
         break; // Only collect one orb at a time
+      } else {
+        toast.info("Move closer to an orb!");
       }
     }
   };
 
   // Handle projectile firing
-  const handleFireProjectile = (ufoId: string, direction: number) => {
-    if (!isRunning) {
+  const handleFireProjectile = () => {
+    if (!isRunning || ufos.length === 0) {
       toast.error("Start the game to fire projectiles!");
       return;
     }
     
-    fireProjectile(ufoId, direction);
+    // Find player's UFO
+    const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
+    if (!playerUfo) return;
+    
+    fireProjectile(playerUfo.id, playerUfo.rotation || 0);
   };
 
   const calculateDistance = (pos1: Position, pos2: Position) => {
     return Math.sqrt(
       Math.pow(pos2.x - pos1.x, 2) + Math.pow(pos2.y - pos1.y, 2)
     );
-  };
-
-  // Mobile touch joystick handling
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isRunning || ufos.length === 0) return;
-    
-    const touch = e.touches[0];
-    setMobileJoystickPos({
-      x: touch.clientX,
-      y: touch.clientY,
-    });
-    
-    // Start moving the UFO - find player's first UFO
-    const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
-    if (playerUfo) {
-      handleUFODragStart(playerUfo.id);
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!mobileJoystickPos || ufos.length === 0) return;
-    
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - mobileJoystickPos.x;
-    const deltaY = touch.clientY - mobileJoystickPos.y;
-    
-    // Move the player's UFO based on touch movement
-    const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
-    if (playerUfo) {
-      const newPosition = {
-        x: playerUfo.position.x + deltaX * 0.5, // Reduce sensitivity
-        y: playerUfo.position.y + deltaY * 0.5,
-      };
-      
-      handleUFOPositionUpdate(playerUfo.id, newPosition);
-    }
-    
-    // Update the joystick position
-    setMobileJoystickPos({
-      x: touch.clientX,
-      y: touch.clientY,
-    });
-  };
-
-  const handleTouchEnd = () => {
-    // End dragging for player's UFO
-    const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
-    if (playerUfo) {
-      handleUFODragEnd(playerUfo.id);
-    }
-    setMobileJoystickPos(null);
   };
 
   // Get winning progress for each player
@@ -298,11 +346,8 @@ export const GameArea: React.FC = () => {
 
   return (
     <div 
-      className="w-full h-screen relative overflow-hidden" 
+      className="w-full h-screen relative overflow-hidden touch-none" 
       ref={gameAreaRef}
-      onTouchStart={isMobile ? handleTouchStart : undefined}
-      onTouchMove={isMobile ? handleTouchMove : undefined}
-      onTouchEnd={isMobile ? handleTouchEnd : undefined}
     >
       <GameBackground width={size.width} height={size.height} />
       
@@ -383,17 +428,6 @@ export const GameArea: React.FC = () => {
         />
       ))}
       
-      {/* Mobile touch indicator */}
-      {isMobile && mobileJoystickPos && (
-        <div 
-          className="absolute w-16 h-16 rounded-full bg-white/20 pointer-events-none z-50"
-          style={{
-            left: mobileJoystickPos.x - 32,
-            top: mobileJoystickPos.y - 32,
-          }}
-        />
-      )}
-      
       {/* Game Controls */}
       <GameControls
         onStart={startGame}
@@ -402,6 +436,16 @@ export const GameArea: React.FC = () => {
         onSpawnOrb={spawnRandomOrb}
         isRunning={isRunning}
       />
+      
+      {/* On-screen controls for mobile */}
+      {isMobile && isRunning && (
+        <OnScreenControls
+          onMove={handleDirectionPress}
+          onStopMove={handleDirectionRelease}
+          onFire={handleFireProjectile}
+          onCollect={handleSpaceKeyCollection}
+        />
+      )}
       
       {/* Game Stats */}
       <div className="absolute top-4 left-4 bg-black/50 p-2 rounded text-white space-y-1 max-w-xs">
@@ -417,26 +461,16 @@ export const GameArea: React.FC = () => {
         <div>Orbs: {energyOrbs.length}</div>
       </div>
       
-      {/* Game Tips */}
+      {/* Controls tips */}
       {isRunning && (
-        <div className="absolute bottom-20 right-4 bg-black/50 p-2 rounded text-white text-sm max-w-xs">
-          <p><span className="text-game-energy font-bold">TIP:</span> {" "}
+        <div className="absolute top-4 right-4 bg-black/50 p-2 rounded text-white text-sm max-w-xs">
+          <p>
+            <span className="text-game-energy font-bold">Controls:</span> {" "}
             {isMobile 
-              ? "Double-tap your UFO to shoot"
-              : "Use F key to shoot at enemies"
+              ? "Use on-screen pad to move"
+              : "WASD or Arrow Keys to move"
             }
           </p>
-        </div>
-      )}
-      
-      {/* Mobile instructions */}
-      {isMobile && !isRunning && ufos.length > 0 && (
-        <div className="absolute bottom-20 left-0 right-0 flex justify-center">
-          <div className="bg-black/70 p-3 rounded-lg text-white text-center text-sm">
-            <p>Tap and drag to move the UFO</p>
-            <p>Tap orbs to collect when nearby</p>
-            <p>Double-tap your UFO to shoot</p>
-          </div>
         </div>
       )}
     </div>

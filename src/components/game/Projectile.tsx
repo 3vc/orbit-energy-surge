@@ -19,10 +19,10 @@ export const Projectile: React.FC<ProjectileProps> = ({ projectile }) => {
         height: size,
         borderRadius: "50%",
         background: projectile.playerOwnerId === "player1" 
-          ? "theme('colors.game.ufo')" 
+          ? "#9b87f5" 
           : "#E879F9",
         boxShadow: projectile.playerOwnerId === "player1"
-          ? "0 0 10px 2px theme('colors.game.ufo')"
+          ? "0 0 10px 2px #9b87f5"
           : "0 0 10px 2px #E879F9",
         zIndex: 15,
         transform: `rotate(${projectile.direction}deg)`,

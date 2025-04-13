@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { nanoid } from "nanoid";
 import { toast } from "sonner";
@@ -407,7 +406,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       radius: DEFAULT_GAME_CONFIG.ufoRadius,
       isDragging: false,
       rotation: 0,
-      playerOwnerId: playerId
+      playerOwnerId: playerId,
+      cooldown: 0
     });
     
     // Check win/lose conditions after respawn
@@ -545,7 +545,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       radius: DEFAULT_GAME_CONFIG.ufoRadius,
       isDragging: false,
       rotation: 0,
-      playerOwnerId: "player1"
+      playerOwnerId: "player1",
+      cooldown: 0
     });
     
     if (isMultiplayer) {
@@ -559,7 +560,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         radius: DEFAULT_GAME_CONFIG.ufoRadius,
         isDragging: false,
         rotation: 0,
-        playerOwnerId: "player2"
+        playerOwnerId: "player2",
+        cooldown: 0
       });
     }
   },
