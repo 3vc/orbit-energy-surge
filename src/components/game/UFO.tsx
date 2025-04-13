@@ -8,6 +8,7 @@ interface UFOProps {
   onDragStart: (id: string) => void;
   onDragEnd: (id: string) => void;
   onPositionUpdate: (id: string, position: Position) => void;
+  onOrbCollection?: () => void;
 }
 
 export const UFO: React.FC<UFOProps> = ({
@@ -15,6 +16,7 @@ export const UFO: React.FC<UFOProps> = ({
   onDragStart,
   onDragEnd,
   onPositionUpdate,
+  onOrbCollection,
 }) => {
   const ufoRef = useRef<HTMLDivElement>(null);
   const dragOffsetRef = useRef<Position>({ x: 0, y: 0 });
@@ -101,6 +103,7 @@ export const UFO: React.FC<UFOProps> = ({
       a: false,
       s: false,
       d: false,
+      " ": false, // Space
     };
 
     const keyDownHandler = (e: KeyboardEvent) => {
@@ -110,6 +113,12 @@ export const UFO: React.FC<UFOProps> = ({
           setIsMoving(true);
           onDragStart(ufo.id);
         }
+        
+        // Handle space key for collecting orbs
+        if (e.key === " " && onOrbCollection) {
+          onOrbCollection();
+        }
+        
         e.preventDefault();
       }
     };
@@ -119,7 +128,7 @@ export const UFO: React.FC<UFOProps> = ({
         keyState[e.key as keyof typeof keyState] = false;
         
         // Check if any movement keys are still pressed
-        const stillMoving = Object.values(keyState).some(v => v);
+        const stillMoving = Object.entries(keyState).some(([key, value]) => key !== " " && value);
         if (!stillMoving && isMoving) {
           setIsMoving(false);
           onDragEnd(ufo.id);
@@ -167,7 +176,7 @@ export const UFO: React.FC<UFOProps> = ({
       document.removeEventListener("touchmove", handleTouchMove);
       document.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [ufo.id, ufo.position, ufo.speed, isMoving, isMobile, onDragStart, onDragEnd, onPositionUpdate]);
+  }, [ufo.id, ufo.position, ufo.speed, isMoving, isMobile, onDragStart, onDragEnd, onPositionUpdate, onOrbCollection]);
 
   return (
     <div

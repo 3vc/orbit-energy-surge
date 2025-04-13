@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import { useGameStore, Position } from "@/store/gameStore";
 import { UFO } from "./UFO";
@@ -146,6 +147,33 @@ export const GameArea: React.FC = () => {
     }
   };
 
+  // Handle space key orb collection
+  const handleSpaceKeyCollection = () => {
+    if (!isRunning || ufos.length === 0) return;
+    
+    // Find the main UFO (first one for simplicity)
+    const ufo = ufos[0];
+    if (!ufo) return;
+    
+    // Find the closest orb
+    let closestOrb = null;
+    let minDistance = Infinity;
+    
+    for (const orb of energyOrbs) {
+      const distance = calculateDistance(ufo.position, orb.position);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestOrb = orb;
+      }
+    }
+    
+    // Try to collect if close enough
+    if (closestOrb && minDistance <= ufo.radius + closestOrb.size / 2) {
+      collectEnergyOrb(ufo.id, closestOrb.id);
+      toast.success(`Collected ${closestOrb.value} energy!`);
+    }
+  };
+
   const calculateDistance = (pos1: Position, pos2: Position) => {
     return Math.sqrt(
       Math.pow(pos2.x - pos1.x, 2) + Math.pow(pos2.y - pos1.y, 2)
@@ -221,10 +249,10 @@ export const GameArea: React.FC = () => {
             </p>
             <div className="text-left mb-4 space-y-2">
               <p className="text-sm text-gray-300">
-                <span className="text-game-energy">•</span> Drag the purple UFO to move it
+                <span className="text-game-energy">•</span> Use arrow keys or WASD to move the UFO
               </p>
               <p className="text-sm text-gray-300">
-                <span className="text-game-energy">•</span> Click on yellow energy orbs to collect them
+                <span className="text-game-energy">•</span> Press SPACE to collect nearby orbs
               </p>
               <p className="text-sm text-gray-300">
                 <span className="text-game-energy">•</span> Bring the UFO to the green base to deposit energy
@@ -256,6 +284,7 @@ export const GameArea: React.FC = () => {
           onDragStart={handleUFODragStart}
           onDragEnd={handleUFODragEnd}
           onPositionUpdate={handleUFOPositionUpdate}
+          onOrbCollection={handleSpaceKeyCollection}
         />
       ))}
       
