@@ -126,7 +126,7 @@ export const UFO: React.FC<UFOProps> = ({
   useEffect(() => {
     if (!isLocalPlayer) return;
     
-    const SPEED = ufo.speed * 5; // Adjust for keyboard movement
+    const SPEED = ufo.speed * 8; // Increased speed for more responsive controls
     let keyState = {
       ArrowUp: false,
       ArrowDown: false,
@@ -191,13 +191,12 @@ export const UFO: React.FC<UFOProps> = ({
           setIsMoving(false);
           onDragEnd(ufo.id);
         }
-        
-        e.preventDefault();
       }
     };
 
+    // Higher frequency interval for smoother movement
     const moveInterval = setInterval(() => {
-      if (!isMoving) return;
+      if (!ufo) return; // Safety check if UFO is removed
       
       let dx = 0;
       let dy = 0;
@@ -226,7 +225,7 @@ export const UFO: React.FC<UFOProps> = ({
           y: ufo.position.y + dy,
         });
       }
-    }, 16); // ~ 60fps
+    }, 16); // ~60fps for smoother movement
 
     document.addEventListener("keydown", keyDownHandler);
     document.addEventListener("keyup", keyUpHandler);
@@ -262,7 +261,7 @@ export const UFO: React.FC<UFOProps> = ({
         ufoRef.current.removeEventListener("dblclick", handleMobileShoot);
       }
     };
-  }, [ufo.id, ufo.position, ufo.speed, ufo.rotation, ufo.playerOwnerId, isMoving, isMobile, isLocalPlayer, onDragStart, onDragEnd, onPositionUpdate, onOrbCollection, onFireProjectile]);
+  }, [ufo, isMoving, isMobile, isLocalPlayer, onDragStart, onDragEnd, onPositionUpdate, onOrbCollection, onFireProjectile]);
 
   const playerColor = ufo.playerOwnerId === "player1" 
     ? "theme('colors.game.ufo')" 
@@ -280,7 +279,7 @@ export const UFO: React.FC<UFOProps> = ({
         style={{
           width: ufo.radius * 5,
           height: 2,
-          background: `linear-gradient(to right, ${playerColor}, transparent)`,
+          background: `linear-gradient(to right, ${ufo.playerOwnerId === "player1" ? "theme('colors.game.ufo')" : "#E879F9"}, transparent)`,
           left: ufo.position.x,
           top: ufo.position.y,
           transformOrigin: "left center",
@@ -294,7 +293,22 @@ export const UFO: React.FC<UFOProps> = ({
 
   return (
     <>
-      {renderAimCursor()}
+      {isLocalPlayer && cursorPosition && (
+        <div 
+          className="absolute pointer-events-none"
+          style={{
+            width: ufo.radius * 5,
+            height: 2,
+            background: `linear-gradient(to right, ${ufo.playerOwnerId === "player1" ? "theme('colors.game.ufo')" : "#E879F9"}, transparent)`,
+            left: ufo.position.x,
+            top: ufo.position.y,
+            transformOrigin: "left center",
+            transform: `rotate(${getCursorAngle()}deg)`,
+            opacity: 0.6,
+            zIndex: 10,
+          }}
+        />
+      )}
       
       <div
         ref={ufoRef}
@@ -310,6 +324,7 @@ export const UFO: React.FC<UFOProps> = ({
           borderRadius: "50%",
           backgroundColor: ufo.collectedEnergy > 0 ? "rgba(255, 215, 0, 0.3)" : "transparent",
           zIndex: 20,
+          transition: "transform 0.05s ease-out",
         }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
@@ -319,7 +334,7 @@ export const UFO: React.FC<UFOProps> = ({
           <div 
             className="absolute inset-0 animate-pulse-soft"
             style={{ 
-              background: `radial-gradient(circle, ${playerColor} 50%, rgba(155, 135, 245, 0.2) 100%)`,
+              background: `radial-gradient(circle, ${ufo.playerOwnerId === "player1" ? "theme('colors.game.ufo')" : "#E879F9"} 50%, rgba(155, 135, 245, 0.2) 100%)`,
               borderRadius: "50%",
             }}
           />

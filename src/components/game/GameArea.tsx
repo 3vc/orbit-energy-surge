@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import { useGameStore, Position } from "@/store/gameStore";
 import { UFO } from "./UFO";
@@ -58,7 +57,6 @@ export const GameArea: React.FC = () => {
     getPlayerById,
   } = useGameStore();
 
-  // Game loop for projectiles and other continuous updates
   useEffect(() => {
     const gameLoop = (timestamp: number) => {
       if (!lastUpdateTimeRef.current) {
@@ -84,7 +82,6 @@ export const GameArea: React.FC = () => {
     };
   }, [isRunning, updateProjectiles]);
 
-  // Handle game area resizing
   useEffect(() => {
     const updateSize = () => {
       if (gameAreaRef.current) {
@@ -102,14 +99,12 @@ export const GameArea: React.FC = () => {
     };
   }, [setGameAreaSize]);
 
-  // Initialize the game
   useEffect(() => {
     if (size.width > 0 && size.height > 0) {
       resetGame();
     }
   }, [size, resetGame]);
 
-  // Spawn orbs periodically when game is running
   useEffect(() => {
     if (isRunning) {
       orbSpawnIntervalRef.current = setInterval(() => {
@@ -124,18 +119,16 @@ export const GameArea: React.FC = () => {
     }
   }, [isRunning, spawnRandomOrb]);
 
-  // Handle continuous movement for on-screen controls
   useEffect(() => {
     const moveUFO = () => {
       if (!isRunning || ufos.length === 0) return;
       
-      // Get player's first UFO
       const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
       if (!playerUfo) return;
       
       let dx = 0;
       let dy = 0;
-      const SPEED = playerUfo.speed * 5;
+      const SPEED = playerUfo.speed * 8;
       
       if (activeMoveDirection.up) dy -= SPEED;
       if (activeMoveDirection.down) dy += SPEED;
@@ -143,11 +136,9 @@ export const GameArea: React.FC = () => {
       if (activeMoveDirection.right) dx += SPEED;
       
       if (dx !== 0 || dy !== 0) {
-        // Calculate rotation based on direction
         const rotation = Math.atan2(dy, dx) * (180 / Math.PI);
         updateUFORotation(playerUfo.id, rotation);
         
-        // Update position
         const newPosition = {
           x: playerUfo.position.x + dx,
           y: playerUfo.position.y + dy,
@@ -156,19 +147,16 @@ export const GameArea: React.FC = () => {
       }
     };
     
-    // Start movement interval if any direction is active
     const isMoving = Object.values(activeMoveDirection).some(val => val);
     
     if (isMoving && !moveIntervalRef.current) {
-      // Start dragging first
       const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
       if (playerUfo) {
         handleUFODragStart(playerUfo.id);
       }
       
-      moveIntervalRef.current = setInterval(moveUFO, 16); // ~60fps
+      moveIntervalRef.current = setInterval(moveUFO, 16);
     } else if (!isMoving && moveIntervalRef.current) {
-      // End dragging
       const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
       if (playerUfo) {
         handleUFODragEnd(playerUfo.id);
@@ -184,9 +172,8 @@ export const GameArea: React.FC = () => {
         moveIntervalRef.current = null;
       }
     };
-  }, [activeMoveDirection, isRunning, ufos]);
+  }, [activeMoveDirection, isRunning, ufos, updateUFORotation]);
 
-  // Handle direction button press from on-screen controls
   const handleDirectionPress = (direction: "up" | "down" | "left" | "right") => {
     setActiveMoveDirection(prev => ({
       ...prev,
@@ -203,7 +190,6 @@ export const GameArea: React.FC = () => {
     });
   };
 
-  // Handle UFO dragging
   const handleUFODragStart = (id: string) => {
     setUFODragging(id, true);
   };
@@ -211,11 +197,9 @@ export const GameArea: React.FC = () => {
   const handleUFODragEnd = (id: string) => {
     setUFODragging(id, false);
     
-    // Check if the UFO is near any base to deposit energy
     const ufo = ufos.find((u) => u.id === id);
     if (!ufo || ufo.collectedEnergy <= 0) return;
     
-    // Only deposit to your own base
     const playerBase = bases.find(b => b.playerId === ufo.playerOwnerId);
     if (!playerBase) return;
     
@@ -228,7 +212,6 @@ export const GameArea: React.FC = () => {
   };
 
   const handleUFOPositionUpdate = (id: string, position: Position) => {
-    // Keep the UFO within bounds
     const ufo = ufos.find((u) => u.id === id);
     if (!ufo) return;
     
@@ -237,7 +220,6 @@ export const GameArea: React.FC = () => {
       y: Math.max(ufo.radius, Math.min(size.height - ufo.radius, position.y)),
     };
     
-    // Calculate rotation for direction indicator if not being handled by button controls
     if (!Object.values(activeMoveDirection).some(val => val) && 
         (ufo.position.x !== boundedPosition.x || ufo.position.y !== boundedPosition.y)) {
       const deltaX = boundedPosition.x - ufo.position.x;
@@ -251,7 +233,6 @@ export const GameArea: React.FC = () => {
     updateUFOPosition(id, boundedPosition);
   };
 
-  // Handle collecting orbs
   const handleOrbClick = (orbId: string) => {
     if (!isRunning) {
       toast.error("Start the game to collect orbs!");
@@ -261,7 +242,6 @@ export const GameArea: React.FC = () => {
     const orb = energyOrbs.find((o) => o.id === orbId);
     if (!orb) return;
     
-    // Find the closest UFO
     let closestUFO = null;
     let minDistance = Infinity;
     
@@ -273,7 +253,6 @@ export const GameArea: React.FC = () => {
       }
     }
     
-    // Check if the closest UFO is close enough to collect
     if (closestUFO && minDistance <= closestUFO.radius + orb.size / 2) {
       collectEnergyOrb(closestUFO.id, orbId);
       toast.success(`Collected ${orb.value} energy!`);
@@ -282,18 +261,17 @@ export const GameArea: React.FC = () => {
     }
   };
 
-  // Handle space key or button for orb collection
   const handleSpaceKeyCollection = () => {
-    if (!isRunning || ufos.length === 0) return;
+    if (!isRunning || ufos.length === 0) {
+      toast.error("Start the game to collect orbs!");
+      return;
+    }
     
-    // Find the player's UFOs
     const playerUfos = ufos.filter(ufo => 
       (!isMultiplayer || ufo.playerOwnerId === "player1")
     );
     
-    // Try collection for each UFO
     for (const ufo of playerUfos) {
-      // Find the closest orb to this UFO
       let closestOrb = null;
       let minDistance = Infinity;
       
@@ -305,25 +283,22 @@ export const GameArea: React.FC = () => {
         }
       }
       
-      // Try to collect if close enough
       if (closestOrb && minDistance <= ufo.radius + closestOrb.size / 2) {
         collectEnergyOrb(ufo.id, closestOrb.id);
         toast.success(`Collected ${closestOrb.value} energy!`);
-        break; // Only collect one orb at a time
+        break;
       } else {
         toast.info("Move closer to an orb!");
       }
     }
   };
 
-  // Handle projectile firing
   const handleFireProjectile = () => {
     if (!isRunning || ufos.length === 0) {
       toast.error("Start the game to fire projectiles!");
       return;
     }
     
-    // Find player's UFO
     const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
     if (!playerUfo) return;
     
@@ -336,7 +311,6 @@ export const GameArea: React.FC = () => {
     );
   };
 
-  // Get winning progress for each player
   const getWinningProgress = (playerId: string) => {
     const player = getPlayerById(playerId);
     if (!player) return 0;
@@ -351,7 +325,6 @@ export const GameArea: React.FC = () => {
     >
       <GameBackground width={size.width} height={size.height} />
       
-      {/* Welcome message */}
       {!isRunning && ufos.length > 0 && energyOrbs.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center z-50">
           <div className="bg-black/70 p-6 rounded-lg max-w-md text-center">
@@ -397,24 +370,20 @@ export const GameArea: React.FC = () => {
         </div>
       )}
       
-      {/* Bases */}
       {bases.map((base) => {
         const player = getPlayerById(base.playerId);
         if (!player) return null;
         return <Base key={base.playerId} base={base} player={player} />;
       })}
       
-      {/* Energy Orbs */}
       {energyOrbs.map((orb) => (
         <EnergyOrb key={orb.id} orb={orb} onClick={handleOrbClick} />
       ))}
       
-      {/* Projectiles */}
       {projectiles.map((projectile) => (
         <Projectile key={projectile.id} projectile={projectile} />
       ))}
       
-      {/* UFOs */}
       {ufos.map((ufo) => (
         <UFO
           key={ufo.id}
@@ -428,7 +397,6 @@ export const GameArea: React.FC = () => {
         />
       ))}
       
-      {/* Game Controls */}
       <GameControls
         onStart={startGame}
         onPause={pauseGame}
@@ -437,8 +405,7 @@ export const GameArea: React.FC = () => {
         isRunning={isRunning}
       />
       
-      {/* On-screen controls for mobile */}
-      {isMobile && isRunning && (
+      {isMobile && (
         <OnScreenControls
           onMove={handleDirectionPress}
           onStopMove={handleDirectionRelease}
@@ -447,7 +414,6 @@ export const GameArea: React.FC = () => {
         />
       )}
       
-      {/* Game Stats */}
       <div className="absolute top-4 left-4 bg-black/50 p-2 rounded text-white space-y-1 max-w-xs">
         {players.map(player => (
           <div key={player.id} className="space-y-1">
@@ -461,14 +427,13 @@ export const GameArea: React.FC = () => {
         <div>Orbs: {energyOrbs.length}</div>
       </div>
       
-      {/* Controls tips */}
       {isRunning && (
         <div className="absolute top-4 right-4 bg-black/50 p-2 rounded text-white text-sm max-w-xs">
           <p>
             <span className="text-game-energy font-bold">Controls:</span> {" "}
             {isMobile 
               ? "Use on-screen pad to move"
-              : "WASD or Arrow Keys to move"
+              : "Arrow Keys (P1) / WASD (P2)"
             }
           </p>
         </div>

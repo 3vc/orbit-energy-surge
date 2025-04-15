@@ -15,7 +15,7 @@ export const OnScreenControls: React.FC<OnScreenControlsProps> = ({
   onFire,
   onCollect,
 }) => {
-  // Handle button press and release
+  // Handle button press and release with faster response
   const handleTouchStart = (direction: "up" | "down" | "left" | "right") => {
     onMove(direction);
   };
@@ -30,55 +30,55 @@ export const OnScreenControls: React.FC<OnScreenControlsProps> = ({
       <div className="grid grid-cols-3 gap-2">
         <div className="col-start-2">
           <button
-            className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-white active:bg-black/50"
+            className="w-16 h-16 rounded-full bg-black/40 flex items-center justify-center text-white active:bg-black/60 active:scale-95 transition-all duration-100"
             onTouchStart={() => handleTouchStart("up")}
             onTouchEnd={handleTouchEnd}
             onMouseDown={() => handleTouchStart("up")}
             onMouseUp={handleTouchEnd}
             onMouseLeave={handleTouchEnd}
           >
-            <ArrowUp size={24} />
+            <ArrowUp size={28} />
           </button>
         </div>
         <div className="col-start-1 row-start-2">
           <button
-            className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-white active:bg-black/50"
+            className="w-16 h-16 rounded-full bg-black/40 flex items-center justify-center text-white active:bg-black/60 active:scale-95 transition-all duration-100"
             onTouchStart={() => handleTouchStart("left")}
             onTouchEnd={handleTouchEnd}
             onMouseDown={() => handleTouchStart("left")}
             onMouseUp={handleTouchEnd}
             onMouseLeave={handleTouchEnd}
           >
-            <ArrowLeft size={24} />
+            <ArrowLeft size={28} />
           </button>
         </div>
         <div className="col-start-3 row-start-2">
           <button
-            className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-white active:bg-black/50"
+            className="w-16 h-16 rounded-full bg-black/40 flex items-center justify-center text-white active:bg-black/60 active:scale-95 transition-all duration-100"
             onTouchStart={() => handleTouchStart("right")}
             onTouchEnd={handleTouchEnd}
             onMouseDown={() => handleTouchStart("right")}
             onMouseUp={handleTouchEnd}
             onMouseLeave={handleTouchEnd}
           >
-            <ArrowRight size={24} />
+            <ArrowRight size={28} />
           </button>
         </div>
         <div className="col-start-2 row-start-2">
-          <div className="w-14 h-14 flex items-center justify-center text-white/50">
+          <div className="w-16 h-16 flex items-center justify-center text-white/50">
             <div className="w-4 h-4 rounded-full bg-white/20"></div>
           </div>
         </div>
         <div className="col-start-2 row-start-3">
           <button
-            className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-white active:bg-black/50"
+            className="w-16 h-16 rounded-full bg-black/40 flex items-center justify-center text-white active:bg-black/60 active:scale-95 transition-all duration-100"
             onTouchStart={() => handleTouchStart("down")}
             onTouchEnd={handleTouchEnd}
             onMouseDown={() => handleTouchStart("down")}
             onMouseUp={handleTouchEnd}
             onMouseLeave={handleTouchEnd}
           >
-            <ArrowDown size={24} />
+            <ArrowDown size={28} />
           </button>
         </div>
       </div>
@@ -86,18 +86,18 @@ export const OnScreenControls: React.FC<OnScreenControlsProps> = ({
       {/* Action buttons */}
       <div className="flex gap-4">
         <button
-          className="w-14 h-14 rounded-full bg-game-energy/70 flex items-center justify-center text-black font-bold active:bg-game-energy/90"
+          className="w-16 h-16 rounded-full bg-game-energy/80 flex items-center justify-center text-black font-bold active:bg-game-energy active:scale-95 transition-all duration-100"
           onTouchStart={onCollect}
           onClick={onCollect}
         >
           GRAB
         </button>
         <button
-          className="w-14 h-14 rounded-full bg-game-ufo/70 flex items-center justify-center text-white active:bg-game-ufo/90"
+          className="w-16 h-16 rounded-full bg-game-ufo/80 flex items-center justify-center text-white active:bg-game-ufo active:scale-95 transition-all duration-100"
           onTouchStart={onFire}
           onClick={onFire}
         >
-          <Target size={24} />
+          <Target size={28} />
         </button>
       </div>
     </div>
