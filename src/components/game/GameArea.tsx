@@ -121,9 +121,48 @@ export const GameArea: React.FC = () => {
   }, [isRunning, spawnRandomOrb]);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isRunning) return;
+
+      const key = e.key.toLowerCase();
+      if (key === "arrowup" || key === "w") {
+        setActiveMoveDirection(prev => ({ ...prev, up: true }));
+      } else if (key === "arrowdown" || key === "s") {
+        setActiveMoveDirection(prev => ({ ...prev, down: true }));
+      } else if (key === "arrowleft" || key === "a") {
+        setActiveMoveDirection(prev => ({ ...prev, left: true }));
+      } else if (key === "arrowright" || key === "d") {
+        setActiveMoveDirection(prev => ({ ...prev, right: true }));
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (!isRunning) return;
+
+      const key = e.key.toLowerCase();
+      if (key === "arrowup" || key === "w") {
+        setActiveMoveDirection(prev => ({ ...prev, up: false }));
+      } else if (key === "arrowdown" || key === "s") {
+        setActiveMoveDirection(prev => ({ ...prev, down: false }));
+      } else if (key === "arrowleft" || key === "a") {
+        setActiveMoveDirection(prev => ({ ...prev, left: false }));
+      } else if (key === "arrowright" || key === "d") {
+        setActiveMoveDirection(prev => ({ ...prev, right: false }));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [isRunning]);
+
+  useEffect(() => {
     const moveUFO = () => {
       if (!isRunning || ufos.length === 0) return;
-      //if (ufos.length === 0) return;
       
       const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
       if (!playerUfo) return;
@@ -214,6 +253,8 @@ export const GameArea: React.FC = () => {
   };
 
   const handleUFOPositionUpdate = (id: string, position: Position) => {
+    if (!isRunning) return;
+
     const ufo = ufos.find((u) => u.id === id);
     if (!ufo) return;
     
@@ -236,6 +277,8 @@ export const GameArea: React.FC = () => {
   };
 
   const handleOrbClick = (orbId: string) => {
+    if (!isRunning) return;
+
     const orb = energyOrbs.find((o) => o.id === orbId);
     if (!orb) return;
     
@@ -259,8 +302,10 @@ export const GameArea: React.FC = () => {
   };
 
   const handleSpaceKeyCollection = () => {
+    if (!isRunning) return;
+
     const playerUfos = ufos.filter(ufo => 
-      ufo.playerOwnerId === "player1"
+      (!isMultiplayer || ufo.playerOwnerId === "player1")
     );
     
     for (const ufo of playerUfos) {
@@ -284,38 +329,12 @@ export const GameArea: React.FC = () => {
       }
     }
   };
-  
-  const handlePlayer2Collection = () => {
-    if (!isMultiplayer) return;
-    
-    const player2Ufos = ufos.filter(ufo => 
-      ufo.playerOwnerId === "player2"
-    );
-    
-    for (const ufo of player2Ufos) {
-      let closestOrb = null;
-      let minDistance = Infinity;
-      
-      for (const orb of energyOrbs) {
-        const distance = calculateDistance(ufo.position, orb.position);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestOrb = orb;
-        }
-      }
-      
-      if (closestOrb && minDistance <= ufo.radius + closestOrb.size / 2) {
-        collectEnergyOrb(ufo.id, closestOrb.id);
-        toast.success(`Player 2 collected ${closestOrb.value} energy!`);
-        break;
-      } else {
-        toast.info("Player 2: Move closer to an orb!");
-      }
-    }
-  };
 
-  const handleFireProjectile = (id: string, direction: number) => {
-    fireProjectile(id, direction);
+  const handleFireProjectile = () => {
+    const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
+    if (!playerUfo) return;
+    
+    fireProjectile(playerUfo.id, playerUfo.rotation || 0);
   };
 
   const calculateDistance = (pos1: Position, pos2: Position) => {
@@ -404,14 +423,8 @@ export const GameArea: React.FC = () => {
           onDragStart={handleUFODragStart}
           onDragEnd={handleUFODragEnd}
           onPositionUpdate={handleUFOPositionUpdate}
-          onOrbCollection={
-            ufo.playerOwnerId === "player1" 
-              ? handleSpaceKeyCollection 
-              : ufo.playerOwnerId === "player2" 
-                ? handlePlayer2Collection 
-                : undefined
-          }
-          onFireProjectile={(id, direction) => handleFireProjectile(id, direction)}
+          onOrbCollection={ufo.playerOwnerId === "player1" ? handleSpaceKeyCollection : undefined}
+          onFireProjectile={(id, direction) => fireProjectile(id, direction)}
           isLocalPlayer={!isMultiplayer || ufo.playerOwnerId === "player1" || ufo.playerOwnerId === "player2"}
         />
       ))}
@@ -428,10 +441,7 @@ export const GameArea: React.FC = () => {
         <OnScreenControls
           onMove={handleDirectionPress}
           onStopMove={handleDirectionRelease}
-          onFire={() => {
-            const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
-            if (playerUfo) handleFireProjectile(playerUfo.id, playerUfo.rotation || 0);
-          }}
+          onFire={handleFireProjectile}
           onCollect={handleSpaceKeyCollection}
         />
       )}
