@@ -122,7 +122,8 @@ export const GameArea: React.FC = () => {
 
   useEffect(() => {
     const moveUFO = () => {
-      if (ufos.length === 0) return;
+      if (!isRunning || ufos.length === 0) return;
+      //if (ufos.length === 0) return;
       
       const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
       if (!playerUfo) return;
