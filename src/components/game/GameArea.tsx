@@ -121,7 +121,7 @@ export const GameArea: React.FC = () => {
 
   useEffect(() => {
     const moveUFO = () => {
-      if (!isRunning || ufos.length === 0) return;
+      if (ufos.length === 0) return;
       
       const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
       if (!playerUfo) return;
@@ -172,7 +172,7 @@ export const GameArea: React.FC = () => {
         moveIntervalRef.current = null;
       }
     };
-  }, [activeMoveDirection, isRunning, ufos, updateUFORotation]);
+  }, [activeMoveDirection, ufos, updateUFORotation]);
 
   const handleDirectionPress = (direction: "up" | "down" | "left" | "right") => {
     setActiveMoveDirection(prev => ({
@@ -262,7 +262,7 @@ export const GameArea: React.FC = () => {
   };
 
   const handleSpaceKeyCollection = () => {
-    if (!isRunning || ufos.length === 0) {
+    if (!isRunning) {
       toast.error("Start the game to collect orbs!");
       return;
     }
@@ -294,7 +294,7 @@ export const GameArea: React.FC = () => {
   };
 
   const handleFireProjectile = () => {
-    if (!isRunning || ufos.length === 0) {
+    if (!isRunning) {
       toast.error("Start the game to fire projectiles!");
       return;
     }

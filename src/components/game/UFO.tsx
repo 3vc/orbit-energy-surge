@@ -28,7 +28,6 @@ export const UFO: React.FC<UFOProps> = ({
   const [cursorPosition, setCursorPosition] = useState<Position | null>(null);
   const isMobile = useIsMobile();
 
-  // Calculate cursor angle
   const getCursorAngle = () => {
     if (!cursorPosition) return ufo.rotation || 0;
     
@@ -37,7 +36,6 @@ export const UFO: React.FC<UFOProps> = ({
     return Math.atan2(deltaY, deltaX) * (180 / Math.PI);
   };
 
-  // Handle mobile touch events
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!ufoRef.current || !isLocalPlayer) return;
     
@@ -70,7 +68,6 @@ export const UFO: React.FC<UFOProps> = ({
     setIsMoving(false);
   };
 
-  // Handle mouse events for desktop
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!ufoRef.current || !isLocalPlayer) return;
     
@@ -107,7 +104,6 @@ export const UFO: React.FC<UFOProps> = ({
     document.removeEventListener("mouseup", handleMouseUp);
   };
 
-  // Track cursor position for aiming
   useEffect(() => {
     if (!isLocalPlayer) return;
     
@@ -122,11 +118,10 @@ export const UFO: React.FC<UFOProps> = ({
     };
   }, [isLocalPlayer]);
 
-  // Keyboard controls
   useEffect(() => {
     if (!isLocalPlayer) return;
     
-    const SPEED = ufo.speed * 8; // Increased speed for more responsive controls
+    const SPEED = ufo.speed * 8;
     let keyState = {
       ArrowUp: false,
       ArrowDown: false,
@@ -136,19 +131,17 @@ export const UFO: React.FC<UFOProps> = ({
       a: false,
       s: false,
       d: false,
-      " ": false, // Space for orb collection
-      f: false,   // F for firing
+      " ": false,
+      f: false,
     };
 
     const keyDownHandler = (e: KeyboardEvent) => {
       if (e.key in keyState) {
         keyState[e.key as keyof typeof keyState] = true;
 
-        // If this is Player 2 (WASD) or Player 1 (Arrows), handle their respective keys
         const isPlayer1Controls = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key);
         const isPlayer2Controls = ["w", "a", "s", "d"].includes(e.key);
         
-        // Only handle controls for the player that owns this UFO
         if ((ufo.playerOwnerId === "player1" && isPlayer1Controls) || 
             (ufo.playerOwnerId === "player2" && isPlayer2Controls)) {
           
@@ -160,13 +153,11 @@ export const UFO: React.FC<UFOProps> = ({
           e.preventDefault();
         }
         
-        // Handle space key for collecting orbs (for any player)
         if (e.key === " " && onOrbCollection) {
           onOrbCollection();
           e.preventDefault();
         }
         
-        // Handle F key for firing projectiles (for any player)
         if (e.key === "f" && onFireProjectile) {
           onFireProjectile(ufo.id, getCursorAngle());
           e.preventDefault();
@@ -178,7 +169,6 @@ export const UFO: React.FC<UFOProps> = ({
       if (e.key in keyState) {
         keyState[e.key as keyof typeof keyState] = false;
         
-        // Check if any movement keys are still pressed for this player
         let stillMoving = false;
         
         if (ufo.playerOwnerId === "player1") {
@@ -194,22 +184,18 @@ export const UFO: React.FC<UFOProps> = ({
       }
     };
 
-    // Higher frequency interval for smoother movement
     const moveInterval = setInterval(() => {
-      if (!ufo) return; // Safety check if UFO is removed
+      if (!ufo) return;
       
       let dx = 0;
       let dy = 0;
       
-      // Apply controls based on which player owns this UFO
       if (ufo.playerOwnerId === "player1") {
-        // Arrow keys for Player 1
         if (keyState.ArrowUp) dy -= SPEED;
         if (keyState.ArrowDown) dy += SPEED;
         if (keyState.ArrowLeft) dx -= SPEED;
         if (keyState.ArrowRight) dx += SPEED;
       } else if (ufo.playerOwnerId === "player2") {
-        // WASD for Player 2
         if (keyState.w) dy -= SPEED;
         if (keyState.s) dy += SPEED;
         if (keyState.a) dx -= SPEED;
@@ -217,7 +203,6 @@ export const UFO: React.FC<UFOProps> = ({
       }
       
       if (dx !== 0 || dy !== 0) {
-        // Calculate rotation based on movement direction
         const rotation = Math.atan2(dy, dx) * (180 / Math.PI);
         
         onPositionUpdate(ufo.id, {
@@ -225,18 +210,16 @@ export const UFO: React.FC<UFOProps> = ({
           y: ufo.position.y + dy,
         });
       }
-    }, 16); // ~60fps for smoother movement
+    }, 16);
 
     document.addEventListener("keydown", keyDownHandler);
     document.addEventListener("keyup", keyUpHandler);
     
-    // Touch events for mobile
     if (isMobile && ufoRef.current) {
       document.addEventListener("touchmove", handleTouchMove);
       document.addEventListener("touchend", handleTouchEnd);
     }
 
-    // Mouse click for shooting on mobile
     const handleMobileShoot = () => {
       if (isMobile && onFireProjectile && isLocalPlayer) {
         onFireProjectile(ufo.id, ufo.rotation || 0);
@@ -247,7 +230,6 @@ export const UFO: React.FC<UFOProps> = ({
       ufoRef.current.addEventListener("dblclick", handleMobileShoot);
     }
 
-    // Clean up
     return () => {
       clearInterval(moveInterval);
       document.removeEventListener("keydown", keyDownHandler);
@@ -265,9 +247,8 @@ export const UFO: React.FC<UFOProps> = ({
 
   const playerColor = ufo.playerOwnerId === "player1" 
     ? "theme('colors.game.ufo')" 
-    : "#E879F9"; // Purple for player 2
+    : "#E879F9";
 
-  // Create aiming cursor
   const renderAimCursor = () => {
     if (!isLocalPlayer || !cursorPosition) return null;
     
@@ -330,7 +311,6 @@ export const UFO: React.FC<UFOProps> = ({
         onTouchStart={handleTouchStart}
       >
         <div className="w-full h-full relative">
-          {/* UFO Body */}
           <div 
             className="absolute inset-0 animate-pulse-soft"
             style={{ 
@@ -339,7 +319,6 @@ export const UFO: React.FC<UFOProps> = ({
             }}
           />
           
-          {/* Energy indicator */}
           {ufo.collectedEnergy > 0 && (
             <div className="absolute top-0 left-0 w-full flex justify-center">
               <div className="text-game-energy font-bold text-sm px-2 py-1 rounded-full bg-black/30">
@@ -348,7 +327,6 @@ export const UFO: React.FC<UFOProps> = ({
             </div>
           )}
           
-          {/* Direction indicator */}
           <div 
             className="absolute top-1/2 left-1/2 w-2 h-8 bg-white/70 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none" 
             style={{ 
@@ -357,7 +335,6 @@ export const UFO: React.FC<UFOProps> = ({
             }} 
           />
           
-          {/* Cooldown indicator */}
           {ufo.cooldown > 0 && (
             <div 
               className="absolute bottom-0 left-0 w-full flex justify-center"
