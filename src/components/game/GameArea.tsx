@@ -259,7 +259,7 @@ export const GameArea: React.FC = () => {
 
   const handleSpaceKeyCollection = () => {
     const playerUfos = ufos.filter(ufo => 
-      (!isMultiplayer || ufo.playerOwnerId === "player1")
+      ufo.playerOwnerId === "player1"
     );
     
     for (const ufo of playerUfos) {
@@ -283,12 +283,38 @@ export const GameArea: React.FC = () => {
       }
     }
   };
-
-  const handleFireProjectile = () => {
-    const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
-    if (!playerUfo) return;
+  
+  const handlePlayer2Collection = () => {
+    if (!isMultiplayer) return;
     
-    fireProjectile(playerUfo.id, playerUfo.rotation || 0);
+    const player2Ufos = ufos.filter(ufo => 
+      ufo.playerOwnerId === "player2"
+    );
+    
+    for (const ufo of player2Ufos) {
+      let closestOrb = null;
+      let minDistance = Infinity;
+      
+      for (const orb of energyOrbs) {
+        const distance = calculateDistance(ufo.position, orb.position);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestOrb = orb;
+        }
+      }
+      
+      if (closestOrb && minDistance <= ufo.radius + closestOrb.size / 2) {
+        collectEnergyOrb(ufo.id, closestOrb.id);
+        toast.success(`Player 2 collected ${closestOrb.value} energy!`);
+        break;
+      } else {
+        toast.info("Player 2: Move closer to an orb!");
+      }
+    }
+  };
+
+  const handleFireProjectile = (id: string, direction: number) => {
+    fireProjectile(id, direction);
   };
 
   const calculateDistance = (pos1: Position, pos2: Position) => {
@@ -377,8 +403,14 @@ export const GameArea: React.FC = () => {
           onDragStart={handleUFODragStart}
           onDragEnd={handleUFODragEnd}
           onPositionUpdate={handleUFOPositionUpdate}
-          onOrbCollection={ufo.playerOwnerId === "player1" ? handleSpaceKeyCollection : undefined}
-          onFireProjectile={(id, direction) => fireProjectile(id, direction)}
+          onOrbCollection={
+            ufo.playerOwnerId === "player1" 
+              ? handleSpaceKeyCollection 
+              : ufo.playerOwnerId === "player2" 
+                ? handlePlayer2Collection 
+                : undefined
+          }
+          onFireProjectile={(id, direction) => handleFireProjectile(id, direction)}
           isLocalPlayer={!isMultiplayer || ufo.playerOwnerId === "player1" || ufo.playerOwnerId === "player2"}
         />
       ))}
@@ -395,7 +427,10 @@ export const GameArea: React.FC = () => {
         <OnScreenControls
           onMove={handleDirectionPress}
           onStopMove={handleDirectionRelease}
-          onFire={handleFireProjectile}
+          onFire={() => {
+            const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
+            if (playerUfo) handleFireProjectile(playerUfo.id, playerUfo.rotation || 0);
+          }}
           onCollect={handleSpaceKeyCollection}
         />
       )}

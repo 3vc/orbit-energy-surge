@@ -19,7 +19,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
   onSpawnOrb,
   isRunning,
 }) => {
-  const { players } = useGameStore();
+  const { players, isMultiplayer } = useGameStore();
   
   // Check if game is over (any player won or lost)
   const isGameOver = players.some(player => player.isWinner || player.isLoser);

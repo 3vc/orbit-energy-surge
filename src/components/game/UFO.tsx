@@ -134,14 +134,16 @@ export const UFO: React.FC<UFOProps> = ({
       d: false,
       " ": false,
       f: false,
+      q: false,
+      e: false,
     };
 
     const keyDownHandler = (e: KeyboardEvent) => {
       if (e.key in keyState) {
         keyState[e.key as keyof typeof keyState] = true;
 
-        const isPlayer1Controls = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key);
-        const isPlayer2Controls = ["w", "a", "s", "d"].includes(e.key);
+        const isPlayer1Controls = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "f"].includes(e.key);
+        const isPlayer2Controls = ["w", "a", "s", "d", "q", "e"].includes(e.key);
         
         if ((ufo.playerOwnerId === "player1" && isPlayer1Controls) || 
             (ufo.playerOwnerId === "player2" && isPlayer2Controls)) {
@@ -154,12 +156,26 @@ export const UFO: React.FC<UFOProps> = ({
           e.preventDefault();
         }
         
-        if (e.key === " " && onOrbCollection) {
+        // Player 1 collection with space
+        if (e.key === " " && onOrbCollection && ufo.playerOwnerId === "player1") {
           onOrbCollection();
           e.preventDefault();
         }
         
-        if (e.key === "f" && onFireProjectile) {
+        // Player 2 collection with q
+        if (e.key === "q" && onOrbCollection && ufo.playerOwnerId === "player2") {
+          onOrbCollection();
+          e.preventDefault();
+        }
+        
+        // Player 1 fire with f
+        if (e.key === "f" && onFireProjectile && ufo.playerOwnerId === "player1") {
+          onFireProjectile(ufo.id, getCursorAngle());
+          e.preventDefault();
+        }
+        
+        // Player 2 fire with e
+        if (e.key === "e" && onFireProjectile && ufo.playerOwnerId === "player2") {
           onFireProjectile(ufo.id, getCursorAngle());
           e.preventDefault();
         }
@@ -249,29 +265,6 @@ export const UFO: React.FC<UFOProps> = ({
   const playerColor = ufo.playerOwnerId === "player1" 
     ? "theme('colors.game.ufo')" 
     : "#E879F9";
-
-  const renderAimCursor = () => {
-    if (!isLocalPlayer || !cursorPosition) return null;
-    
-    const angle = getCursorAngle();
-    
-    return (
-      <div 
-        className="absolute pointer-events-none"
-        style={{
-          width: ufo.radius * 5,
-          height: 2,
-          background: `linear-gradient(to right, ${ufo.playerOwnerId === "player1" ? "theme('colors.game.ufo')" : "#E879F9"}, transparent)`,
-          left: ufo.position.x,
-          top: ufo.position.y,
-          transformOrigin: "left center",
-          transform: `rotate(${angle}deg)`,
-          opacity: 0.6,
-          zIndex: 10,
-        }}
-      />
-    );
-  };
 
   return (
     <>
