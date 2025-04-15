@@ -24,6 +24,26 @@ export const GameControls: React.FC<GameControlsProps> = ({
   // Check if game is over (any player won or lost)
   const isGameOver = players.some(player => player.isWinner || player.isLoser);
   
+  // Handle keyboard shortcut for pausing/resuming
+  React.useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Use 'p' key as pause/play toggle
+      if (e.key === 'p') {
+        if (isRunning) {
+          onPause();
+        } else if (!isGameOver) {
+          onStart();
+        }
+        e.preventDefault();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [isRunning, isGameOver, onStart, onPause]);
+  
   return (
     <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 flex gap-2">
       {!isRunning ? (

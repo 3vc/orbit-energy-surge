@@ -1,6 +1,5 @@
 
 import React from "react";
-import { Position } from "@/store/gameStore";
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Target } from "lucide-react";
 
 interface OnScreenControlsProps {
@@ -31,7 +30,7 @@ export const OnScreenControls: React.FC<OnScreenControlsProps> = ({
       <div className="grid grid-cols-3 gap-2">
         <div className="col-start-2">
           <button
-            className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-white"
+            className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-white active:bg-black/50"
             onTouchStart={() => handleTouchStart("up")}
             onTouchEnd={handleTouchEnd}
             onMouseDown={() => handleTouchStart("up")}
@@ -43,7 +42,7 @@ export const OnScreenControls: React.FC<OnScreenControlsProps> = ({
         </div>
         <div className="col-start-1 row-start-2">
           <button
-            className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-white"
+            className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-white active:bg-black/50"
             onTouchStart={() => handleTouchStart("left")}
             onTouchEnd={handleTouchEnd}
             onMouseDown={() => handleTouchStart("left")}
@@ -55,7 +54,7 @@ export const OnScreenControls: React.FC<OnScreenControlsProps> = ({
         </div>
         <div className="col-start-3 row-start-2">
           <button
-            className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-white"
+            className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-white active:bg-black/50"
             onTouchStart={() => handleTouchStart("right")}
             onTouchEnd={handleTouchEnd}
             onMouseDown={() => handleTouchStart("right")}
@@ -72,7 +71,7 @@ export const OnScreenControls: React.FC<OnScreenControlsProps> = ({
         </div>
         <div className="col-start-2 row-start-3">
           <button
-            className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-white"
+            className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-white active:bg-black/50"
             onTouchStart={() => handleTouchStart("down")}
             onTouchEnd={handleTouchEnd}
             onMouseDown={() => handleTouchStart("down")}
@@ -87,14 +86,14 @@ export const OnScreenControls: React.FC<OnScreenControlsProps> = ({
       {/* Action buttons */}
       <div className="flex gap-4">
         <button
-          className="w-14 h-14 rounded-full bg-game-energy/70 flex items-center justify-center text-black font-bold"
+          className="w-14 h-14 rounded-full bg-game-energy/70 flex items-center justify-center text-black font-bold active:bg-game-energy/90"
           onTouchStart={onCollect}
           onClick={onCollect}
         >
           GRAB
         </button>
         <button
-          className="w-14 h-14 rounded-full bg-game-ufo/70 flex items-center justify-center text-white"
+          className="w-14 h-14 rounded-full bg-game-ufo/70 flex items-center justify-center text-white active:bg-game-ufo/90"
           onTouchStart={onFire}
           onClick={onFire}
         >

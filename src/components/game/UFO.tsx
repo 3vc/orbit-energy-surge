@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from "react";
 import { UFO as UFOType, Position } from "@/store/gameStore";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -142,40 +141,57 @@ export const UFO: React.FC<UFOProps> = ({
     };
 
     const keyDownHandler = (e: KeyboardEvent) => {
-      if (Object.keys(keyState).includes(e.key)) {
+      if (e.key in keyState) {
         keyState[e.key as keyof typeof keyState] = true;
-        if (!isMoving) {
-          setIsMoving(true);
-          onDragStart(ufo.id);
+
+        // If this is Player 2 (WASD) or Player 1 (Arrows), handle their respective keys
+        const isPlayer1Controls = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key);
+        const isPlayer2Controls = ["w", "a", "s", "d"].includes(e.key);
+        
+        // Only handle controls for the player that owns this UFO
+        if ((ufo.playerOwnerId === "player1" && isPlayer1Controls) || 
+            (ufo.playerOwnerId === "player2" && isPlayer2Controls)) {
+          
+          if (!isMoving) {
+            setIsMoving(true);
+            onDragStart(ufo.id);
+          }
+          
+          e.preventDefault();
         }
         
-        // Handle space key for collecting orbs
+        // Handle space key for collecting orbs (for any player)
         if (e.key === " " && onOrbCollection) {
           onOrbCollection();
+          e.preventDefault();
         }
         
-        // Handle F key for firing projectiles
+        // Handle F key for firing projectiles (for any player)
         if (e.key === "f" && onFireProjectile) {
           onFireProjectile(ufo.id, getCursorAngle());
+          e.preventDefault();
         }
-        
-        e.preventDefault();
       }
     };
 
     const keyUpHandler = (e: KeyboardEvent) => {
-      if (Object.keys(keyState).includes(e.key)) {
+      if (e.key in keyState) {
         keyState[e.key as keyof typeof keyState] = false;
         
-        // Check if any movement keys are still pressed
-        const stillMoving = Object.entries(keyState).some(([key, value]) => 
-          key !== " " && key !== "f" && value
-        );
+        // Check if any movement keys are still pressed for this player
+        let stillMoving = false;
+        
+        if (ufo.playerOwnerId === "player1") {
+          stillMoving = keyState.ArrowUp || keyState.ArrowDown || keyState.ArrowLeft || keyState.ArrowRight;
+        } else if (ufo.playerOwnerId === "player2") {
+          stillMoving = keyState.w || keyState.a || keyState.s || keyState.d;
+        }
         
         if (!stillMoving && isMoving) {
           setIsMoving(false);
           onDragEnd(ufo.id);
         }
+        
         e.preventDefault();
       }
     };
@@ -186,13 +202,25 @@ export const UFO: React.FC<UFOProps> = ({
       let dx = 0;
       let dy = 0;
       
-      // Combine arrow keys and WASD
-      if (keyState.ArrowUp || keyState.w) dy -= SPEED;
-      if (keyState.ArrowDown || keyState.s) dy += SPEED;
-      if (keyState.ArrowLeft || keyState.a) dx -= SPEED;
-      if (keyState.ArrowRight || keyState.d) dx += SPEED;
+      // Apply controls based on which player owns this UFO
+      if (ufo.playerOwnerId === "player1") {
+        // Arrow keys for Player 1
+        if (keyState.ArrowUp) dy -= SPEED;
+        if (keyState.ArrowDown) dy += SPEED;
+        if (keyState.ArrowLeft) dx -= SPEED;
+        if (keyState.ArrowRight) dx += SPEED;
+      } else if (ufo.playerOwnerId === "player2") {
+        // WASD for Player 2
+        if (keyState.w) dy -= SPEED;
+        if (keyState.s) dy += SPEED;
+        if (keyState.a) dx -= SPEED;
+        if (keyState.d) dx += SPEED;
+      }
       
       if (dx !== 0 || dy !== 0) {
+        // Calculate rotation based on movement direction
+        const rotation = Math.atan2(dy, dx) * (180 / Math.PI);
+        
         onPositionUpdate(ufo.id, {
           x: ufo.position.x + dx,
           y: ufo.position.y + dy,
@@ -234,7 +262,7 @@ export const UFO: React.FC<UFOProps> = ({
         ufoRef.current.removeEventListener("dblclick", handleMobileShoot);
       }
     };
-  }, [ufo.id, ufo.position, ufo.speed, ufo.rotation, isMoving, isMobile, isLocalPlayer, onDragStart, onDragEnd, onPositionUpdate, onOrbCollection, onFireProjectile]);
+  }, [ufo.id, ufo.position, ufo.speed, ufo.rotation, ufo.playerOwnerId, isMoving, isMobile, isLocalPlayer, onDragStart, onDragEnd, onPositionUpdate, onOrbCollection, onFireProjectile]);
 
   const playerColor = ufo.playerOwnerId === "player1" 
     ? "theme('colors.game.ufo')" 
