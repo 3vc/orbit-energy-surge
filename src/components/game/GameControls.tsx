@@ -30,9 +30,9 @@ export const GameControls: React.FC<GameControlsProps> = ({
       // Use 'p' key as pause/play toggle
       if (e.key === 'p') {
         if (isRunning) {
-          onStart();
-        } else if (!isGameOver) {
           onPause();
+        } else if (!isGameOver) {
+          onStart();
         }
         e.preventDefault();
       }
