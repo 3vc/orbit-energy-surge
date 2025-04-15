@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import { useGameStore, Position } from "@/store/gameStore";
 import { UFO } from "./UFO";
@@ -234,11 +235,6 @@ export const GameArea: React.FC = () => {
   };
 
   const handleOrbClick = (orbId: string) => {
-    if (!isRunning) {
-      toast.error("Start the game to collect orbs!");
-      return;
-    }
-    
     const orb = energyOrbs.find((o) => o.id === orbId);
     if (!orb) return;
     
@@ -262,11 +258,6 @@ export const GameArea: React.FC = () => {
   };
 
   const handleSpaceKeyCollection = () => {
-    if (!isRunning) {
-      toast.error("Start the game to collect orbs!");
-      return;
-    }
-    
     const playerUfos = ufos.filter(ufo => 
       (!isMultiplayer || ufo.playerOwnerId === "player1")
     );
@@ -294,11 +285,6 @@ export const GameArea: React.FC = () => {
   };
 
   const handleFireProjectile = () => {
-    if (!isRunning) {
-      toast.error("Start the game to fire projectiles!");
-      return;
-    }
-    
     const playerUfo = ufos.find(ufo => ufo.playerOwnerId === "player1");
     if (!playerUfo) return;
     
@@ -335,7 +321,7 @@ export const GameArea: React.FC = () => {
             </p>
             <div className="text-left mb-4 space-y-2">
               <p className="text-sm text-gray-300">
-                <span className="text-game-energy">•</span> Use arrow keys or WASD to move the UFO
+                <span className="text-game-energy">•</span> Use arrow keys (P1) or WASD (P2) to move the UFO
               </p>
               <p className="text-sm text-gray-300">
                 <span className="text-game-energy">•</span> Press SPACE to collect nearby orbs
@@ -392,8 +378,8 @@ export const GameArea: React.FC = () => {
           onDragEnd={handleUFODragEnd}
           onPositionUpdate={handleUFOPositionUpdate}
           onOrbCollection={ufo.playerOwnerId === "player1" ? handleSpaceKeyCollection : undefined}
-          onFireProjectile={handleFireProjectile}
-          isLocalPlayer={!isMultiplayer || ufo.playerOwnerId === "player1"}
+          onFireProjectile={(id, direction) => fireProjectile(id, direction)}
+          isLocalPlayer={!isMultiplayer || ufo.playerOwnerId === "player1" || ufo.playerOwnerId === "player2"}
         />
       ))}
       

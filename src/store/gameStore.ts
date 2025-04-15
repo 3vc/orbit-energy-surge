@@ -448,6 +448,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   toggleMultiplayer: (enabled) => {
     set({ isMultiplayer: enabled });
+    // Reset game to apply multiplayer changes
+    get().resetGame();
   },
 
   setGameAreaSize: (size) => {

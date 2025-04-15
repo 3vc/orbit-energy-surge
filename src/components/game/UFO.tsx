@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from "react";
 import { UFO as UFOType, Position } from "@/store/gameStore";
 import { useIsMobile } from "@/hooks/use-mobile";
